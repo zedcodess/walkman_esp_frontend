@@ -16,6 +16,7 @@ import './App.css';
 
 // WebSocket connection
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://walkman-esp-backend.onrender.com';
+console.log('Backend URL:', BACKEND_URL);
 
 function App() {
   // Audio and playback state
@@ -85,6 +86,11 @@ function App() {
       console.log('Received command:', data);
       setLastCommand(data);
       handleRemoteCommand(data.command);
+      
+      // Clear command indicator after 3 seconds
+      setTimeout(() => {
+        setLastCommand(null);
+      }, 3000);
     });
     
     return () => {
@@ -114,7 +120,7 @@ function App() {
   // Send song info when relevant state changes
   useEffect(() => {
     sendSongInfo();
-  }, [currentSong, isPlaying, currentTrack, playlist.length]);
+  }, [currentSong, isPlaying, currentTrack, playlist.length, currentTime]);
   
   // Audio context for visualization
   useEffect(() => {
