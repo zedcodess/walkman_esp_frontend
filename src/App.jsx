@@ -199,11 +199,13 @@ function App() {
       }
       
       if (isPlaying) {
+        console.log('Pausing audio...');
         audioRef.current.pause();
       } else {
+        console.log('Playing audio...');
         await audioRef.current.play();
       }
-      setIsPlaying(!isPlaying);
+      // Don't manually set isPlaying here - let the event handlers do it
     } catch (error) {
       console.error('Error toggling playback:', error);
     }
@@ -272,7 +274,19 @@ function App() {
     }
   };
   
+  const handlePlay = () => {
+    console.log('Audio started playing');
+    setIsPlaying(true);
+  };
+  
+  const handlePause = () => {
+    console.log('Audio paused');
+    setIsPlaying(false);
+  };
+  
   const handleEnded = () => {
+    console.log('Audio ended');
+    setIsPlaying(false);
     nextTrack();
   };
   
@@ -518,6 +532,8 @@ function App() {
           src={currentSong.url}
           onTimeUpdate={handleTimeUpdate}
           onLoadedMetadata={handleLoadedMetadata}
+          onPlay={handlePlay}
+          onPause={handlePause}
           onEnded={handleEnded}
           volume={volume}
           preload="metadata"
