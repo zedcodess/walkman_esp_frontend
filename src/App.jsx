@@ -15,7 +15,7 @@ import io from 'socket.io-client';
 import './App.css';
 
 // WebSocket connection
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://walkman-esp-backend.onrender.com';
 
 function App() {
   // Audio and playback state
@@ -72,6 +72,8 @@ function App() {
     socketRef.current.on('connect', () => {
       console.log('Connected to backend');
       setIsConnected(true);
+      // Send current song info when connected
+      sendSongInfo();
     });
     
     socketRef.current.on('disconnect', () => {
@@ -91,6 +93,28 @@ function App() {
       }
     };
   }, []);
+  
+  // Send song info to backend when song changes or playback state changes
+  const sendSongInfo = () => {
+    if (socketRef.current && socketRef.current.connected) {
+      const songInfo = {
+        songName: currentSong ? currentSong.name : 'No Song',
+        isPlaying: isPlaying,
+        currentTime: Math.floor(currentTime),
+        duration: Math.floor(duration),
+        trackNumber: currentTrack + 1,
+        totalTracks: playlist.length
+      };
+      
+      socketRef.current.emit('songInfo', songInfo);
+      console.log('Sent song info:', songInfo);
+    }
+  };
+  
+  // Send song info when relevant state changes
+  useEffect(() => {
+    sendSongInfo();
+  }, [currentSong, isPlaying, currentTrack, playlist.length]);
   
   // Audio context for visualization
   useEffect(() => {
@@ -137,25 +161,31 @@ function App() {
   }, [isPlaying]);
   
   // Handle remote commands from NodeMCU
-  const handleRemoteCommand = (command) => {
-    switch (command) {
-      case 'playpause':
-        togglePlayPause();
-        break;
-      case 'play':
-        if (!isPlaying) togglePlayPause();
-        break;
-      case 'pause':
-        if (isPlaying) togglePlayPause();
-        break;
-      case 'next':
-        nextTrack();
-        break;
-      case 'prev':
-        previousTrack();
-        break;
-      default:
-        console.warn('Unknown command:', command);
+  const handleRemoteCommand = async (command) => {
+    console.log('Handling remote command:', command);
+    
+    try {
+      switch (command) {
+        case 'playpause':
+          await togglePlayPause();
+          break;
+        case 'play':
+          if (!isPlaying) await togglePlayPause();
+          break;
+        case 'pause':
+          if (isPlaying) await togglePlayPause();
+          break;
+        case 'next':
+          nextTrack();
+          break;
+        case 'prev':
+          previousTrack();
+          break;
+        default:
+          console.warn('Unknown command:', command);
+      }
+    } catch (error) {
+      console.error('Error handling remote command:', error);
     }
   };
   
