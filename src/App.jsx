@@ -73,8 +73,6 @@ function App() {
     socketRef.current.on('connect', () => {
       console.log('Connected to backend');
       setIsConnected(true);
-      // Send current song info when connected
-      sendSongInfo();
     });
     
     socketRef.current.on('disconnect', () => {
@@ -100,9 +98,10 @@ function App() {
     };
   }, []);
   
-  // Send song info to backend when song changes or playback state changes
-  const sendSongInfo = () => {
+  // Send song info when relevant state changes
+  useEffect(() => {
     if (socketRef.current && socketRef.current.connected) {
+      const currentSong = playlist[currentTrack];
       const songInfo = {
         songName: currentSong ? currentSong.name : 'No Song',
         isPlaying: isPlaying,
@@ -115,12 +114,7 @@ function App() {
       socketRef.current.emit('songInfo', songInfo);
       console.log('Sent song info:', songInfo);
     }
-  };
-  
-  // Send song info when relevant state changes
-  useEffect(() => {
-    sendSongInfo();
-  }, [currentSong, isPlaying, currentTrack, playlist.length, currentTime]);
+  }, [playlist, currentTrack, isPlaying, currentTime, duration]);
   
   // Audio context for visualization
   useEffect(() => {
